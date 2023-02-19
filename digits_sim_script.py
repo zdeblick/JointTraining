@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import colorcet as cc
 from scipy.optimize import linear_sum_assignment
+from sklearn.linear_model import LogisticRegression
 
 os.chdir('digits_results')
 
@@ -135,11 +136,11 @@ print(shapes)
 
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
-id+=90000
+id+=0
 (trial,a_i,l_i,s_i,true_task_i,hypo_task_i) = np.unravel_index(id,(200,18,l1s.size,len(subsamples),4,4))
 
 if hypo_task_i!=2 and true_task_i!=2:
-    throw_a_tantrum
+    pass #throw_a_tantrum
 
 L2_matched = hypo_task_i==0
 if L2_matched:
@@ -149,7 +150,7 @@ else:
 alpha = alphas[a_i]
 sub = subsamples[s_i]
 l1 = l1s[l_i]
-
+np.random.seed(trial)
 
 trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
 matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
@@ -176,6 +177,16 @@ if true_task_i>0:
 else:
     train_acts = test(train_dataloader, model)
     test_acts = test(test_dataloader, model)
+
+Cs = np.logspace(-3,4,22)
+task_alignments = np.zeros((2,len(task_maps)-1,Cs.size))
+for task_i in range(1,len(task_maps)):
+    for Ci,C in enumerate(Cs):
+        LR = LogisticRegression(C=C)
+        LR.fit(train_acts,task_maps[task_i](digits.target[:n_train]))
+        task_alignments[0,task_i-1,Ci] = LR.score(test_acts,task_maps[task_i](digits.target[n_train:]))
+        task_alignments[1,task_i-1,Ci] = np.mean(LR.predict_log_proba(test_acts)[np.arange(test_acts.shape[0]),task_maps[task_i](digits.target[n_train:]).astype(int)])
+
 
 print("Done training!")
 N = train_acts.shape[1]
@@ -424,7 +435,7 @@ W[fake_neurons_measured,:] = W_part
 
 fname = 'digits_headlr_'+size+'netmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)
 
-np.savez(fname,train_loss=loss,test_losses=losses,
+np.savez(fname,train_loss=loss,test_losses=losses,task_alignments=task_alignments,
     sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=alignment(np.abs(W)>0,shapes),layer_cm=layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]))
 
 print('Done',fname)

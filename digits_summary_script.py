@@ -20,7 +20,7 @@ pen = 'cross_rc'
 
 for true_task_i,hypo_task_i in itertools.product(range(4),range(4)):
     if true_task_i!=2 and hypo_task_i!=2:
-        continue
+        pass
     trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
     matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
     L2_matched = hypo_task_i==0
@@ -35,6 +35,7 @@ for true_task_i,hypo_task_i in itertools.product(range(4),range(4)):
     sparsities = np.nan*np.ones((trials,len(alphas),l1s.size))
     alignments = np.nan*np.ones((trials,len(alphas),l1s.size))
     cms = np.nan*np.ones((trials,len(alphas),l1s.size,3,3))
+    task_alignments = np.nan*np.ones((trials,len(alphas),l1s.size,2,3,22))
 
     for trial in range(trials):
         for a_i, alpha in enumerate(alphas):
@@ -47,9 +48,10 @@ for true_task_i,hypo_task_i in itertools.product(range(4),range(4)):
                     sparsities[trial,a_i,l_i] = D['cpfn']
                     alignments[trial,a_i,l_i] = D['alignment']
                     cms[trial,a_i,l_i,:,:] = D['layer_cm']
+                    task_alignments[trial,a_i,l_i,:,:,:] = D['task_alignments']
                 except Exception as e:
                     print(e,trial,a_i,l_i)
     fname = savepath+'results_headlr_'+size+trained_str+matched_str+'_pen='+pen+'_thresh_hard'
     if not os.path.isfile(fname+'.npz') or True:
-        np.savez(fname,train_losses=train_losses,test_losses=test_losses,
+        np.savez(fname,train_losses=train_losses,test_losses=test_losses,task_alignments=task_alignments,
                  sparsities=sparsities,alphas=alphas,l1s=l1s,alignments=alignments,d=d,cms=cms)
