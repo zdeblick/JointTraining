@@ -17,8 +17,7 @@ pinv = np.linalg.pinv
 P = 50
 S = 30
 N = 10
-Q = 8
-Q_true = 8
+Qs = [1,4,8]
 
 its = 200
 nv = 2000
@@ -34,7 +33,8 @@ Wy = sW*np.random.randn(N,S)
 Xv = sx*np.random.randn(S,nv)
 xi_yv = sy*np.random.randn(N,nv)
 
-ind_p = id
+ind_p, Qis = np.unravel_index(id,(200,len(Qs)*(len(Qs)-1) ) )
+Q, Q_true = [(q,q_true) for q in Qs for q_true in Qs if q_true<=q][Qis]
 np.random.seed(1+ind_p)
 
 nullspace = scipy.linalg.null_space(Wy).T
@@ -108,8 +108,10 @@ for bi,b in enumerate(bs):
     Lyb2 = S*sy**2/(P-S)*np.trace((np.eye(N)+b**2*sz**2/sy**2*A.T@A)@inv(np.eye(N)+b*A.T@A)@inv(np.eye(N)+b*A.T@A)) + N*sy**2
     Efuns.append(Lyb1+Lyb2)
 
-by = sy**2*np.trace(A.T@A)/(3*sy**2*np.trace(A.T@A@A.T@A)+sz**2*np.trace(A.T@A)+(P-S)/S*sx**2*np.trace((Bz-A@Wy).T@A@A.T@(Bz-A@Wy)))
-Ty = by*np.trace(A.T@A)*S/(N*P)
+by = sy**2*np.trace(A.T@A)/(3*sy**2*np.trace(A.T@A@A.T@A)+sz**2*np.trace(A.T@A)+(P-S-1)/S*sx**2*np.trace((Bz-A@Wy).T@A@A.T@(Bz-A@Wy)))
+Ty = by*np.trace(A.T@A)*S/(N*(P-1))
+mat = pinv(A)@Bz - Wy
+Ttt = S/(P-1) * ( 1-sz**2*np.trace(inv(A@A.T))/(N*sy**2) ) - (P-S-1)/(P-1) * sx**2/(N*sy**2) * np.trace(mat.T@mat)
 
-fname = 'anal_files/2layer/run_A=BWp_P='+str(P)+'_S='+str(S)+'_N='+str(N)+'_Q='+str(Q)+'_Qt='+str(Q_true)+'_it='+str(ind_p)
-np.savez(fname,Ty=Ty,by=by,Efuns=Efuns,Eanals=Eanals,Enums=Enums,seanals=seanals,senums=senums,Wsanal=Wsanal,Wsnum=Wsnum,Bz=Bz,pars=(sx,sy,sz,sW,sB,P,S,N,Q,Q_true,bs,its,Wy))
+fname = 'run_A=BWp_P='+str(P)+'_S='+str(S)+'_N='+str(N)+'_Q='+str(Q)+'_Qt='+str(Q_true)+'_it='+str(ind_p)
+np.savez(fname,Ty=Ty,by=by,Efuns=Efuns,Eanals=Eanals,Enums=Enums,seanals=seanals,senums=senums,Wsanal=Wsanal,Wsnum=Wsnum,Bz=Bz,pars=np.array((sx,sy,sz,sW,sB,P,S,N,Q,Q_true,bs,its,Wy),dtype=object))
