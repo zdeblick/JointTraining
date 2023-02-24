@@ -151,6 +151,7 @@ alpha = alphas[a_i]
 sub = subsamples[s_i]
 l1 = l1s[l_i]
 np.random.seed(1234567)
+torch.manual_seed(1234567)
 
 trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
 matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
@@ -190,6 +191,7 @@ for task_i in range(1,len(task_maps)):
 
 print("Done training!")
 np.random.seed(trial)
+torch.manual_seed(trial)
 
 N = train_acts.shape[1]
 if sub is not None and sub<1:
