@@ -120,4 +120,4 @@ mat = pinv(A)@Bz - Wy
 Ttt = S/(P-1) * ( 1-sz**2*np.trace(inv(A@A.T))/(N*sy**2) ) - (P-S-1)/(P-1) * sx**2/(N*sy**2) * np.trace(mat.T@mat)
 
 fname = 'run_A=BWp_P='+str(P)+'_S='+str(S)+'_N='+str(N)+'_Q='+str(Q)+'_Qt='+str(Q_true)+'_it='+str(ind_p)
-np.savez(fname,Ty=Ty,by=by,Efuns=Efuns,Eanals=Eanals,Enums=Enums,seanals=seanals,senums=senums,Wsanal=Wsanal,Wsnum=Wsnum,Bz=Bz,pars=np.array((sx,sy,sz,sW,sB,P,S,N,Q,Q_true,bs,its,Wy),dtype=object))
+np.savez(fname,Ty=Ty,by=by,Efuns=Efuns,Eanals=Eanals,Enums=Enums,seanals=seanals,senums=senums,Wsanal=Wsanal,Wsnum=Wsnum,Bz=Bz,Ttt_approx=Ttt,pars=np.array((sx,sy,sz,sW,sB,P,S,N,Q,Q_true,bs,its,Wy),dtype=object))
