@@ -13,7 +13,9 @@ This code was used for all the analyses in PAPER!!!. If you use it to publish an
 
 * `digits_results/`: folder for storing results of model fitting obtained from running `digits_sim_script.py`
 * `digits_summaries/`: folder for storing summarized results obtained from running `digits_summary_script.py` or `digits_subsample_sum_script.py`
-* `digits_sim_script.py`: script used to train a data-generating CNN and fit a joint-trained model for a single choice of hyperparameters.
+* `digits_sim_script.py`: methods used to train a data-generating CNN and fit a joint-trained model for a single choice of hyperparameters.
+* `digits_run_main.py`: script executed to fit models for a range of true and hypothesized computations.
+* `digits_run_subsample.py`: script executed to fit models for a range of degrees of subsampling.
 * `digits_summary_script.py`: summarizes results of model fitting across all different true and hypothesized computations into files in `digits_summaries/`
 * `digits_subsample_sum_script.py`: summarizes results of model fitting across different degrees of subsampling into a single file in `digits_summaries/`
 
