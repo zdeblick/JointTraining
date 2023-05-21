@@ -21,15 +21,13 @@ os.chdir('digits_results')
 digits = datasets.load_digits()
 
 class CustomDataset(Dataset):
-    """Face Landmarks dataset."""
+    """A class that is used by DataLoader to supply input and output pairs to a pytorch network for training/evaluation"""
 
     def __init__(self, X, y):
         """
         Args:
-            csv_file (string): Path to the csv file with annotations.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
+            X: inputs
+            y: outputs
         """
         self.X = np.array(X,dtype='float')
         self.y = y
@@ -48,7 +46,13 @@ class CustomDataset(Dataset):
 
 
 class Net(nn.Module):
+    '''The convolutional neural network used as a data-generator (depicted in Figure 3)'''
+    
     def __init__(self,in_shape = np.array([8,6]),d=[8,16,128,10]):
+        '''
+        in_shape: dimensions of input image
+        d: dimensions of network (#channels in layer 1, #channels in layer 2, #hidden units in layer 3, #of classes in output)
+        '''
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, d[0], 3, 1)
         self.conv2 = nn.Conv2d(d[0], d[1], 3, 1)
@@ -78,19 +82,28 @@ class Net(nn.Module):
 
 images = np.expand_dims(digits.images[:,:,1:-1],1)
 in_shape = np.array([8,6],dtype='int')
-n_train = 1024
+n_train = 1024 # number of samples in training set
 d = [16,32,128,10]
-size='med'
 model = Net(in_shape=in_shape, d=d)
 model = model.float()
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-def train(dataloader, model, loss_fn, optimizer, learn=True):
+def train(dataloader, model, loss_fn, optimizer):
+    '''
+    Perform one epoch of training for a network
+    Args:
+        dataloader: DataLoader object that supples the training data
+        model: Net object that is trained
+        loss_fn: pytorch loss function applied to data for training (https://pytorch.org/docs/stable/nn.html#loss-functions)
+        optimizer: pytorch Optimizer used for gradient descent (https://pytorch.org/docs/stable/optim.html)
+    Returns:
+        unit activites (u_i), a samples x units np.array
+    '''
     size = len(dataloader.dataset)
     acts = []
     for batch, (X, y) in enumerate(dataloader):
-#         X, y = X.to(device), y.to(device)
+#         X, y = X.to(device), y.to(device) #specify device and uncomment to use GPU
 
         # Compute prediction error
         pred, act = model(X.float())
@@ -109,6 +122,14 @@ def train(dataloader, model, loss_fn, optimizer, learn=True):
         
         
 def test(dataloader, model):
+    '''
+    compute and print evaluation metrics on a model
+    Args:
+        dataloader: DataLoader object supplying evaluation data
+        model: Net object that will be evaluated
+    Returns:
+        unit activites (u_i), a samples x units np.array
+    '''
     size = len(dataloader.dataset)
     model.eval()
     test_loss, correct = 0, 0
@@ -125,67 +146,73 @@ def test(dataloader, model):
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     return np.vstack(acts)
 
-l1s = np.logspace(-6,-2,9)
-trials = 40
+#!!! move to a run script
+l1s = np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
 subsamples = [0.05,0.1,0.25,0.5]
 subsamples = [1]
-shapes = [[d[0], in_shape[0]-2, in_shape[1]-2],[d[1], np.prod((in_shape-4))],[d[2]]]
-print(shapes)
-shapes = [[d[0], 6, 4],[d[1], 10],[d[2]]]
-print(shapes)
 
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
-id+=0
 (trial,a_i,l_i,s_i,true_task_i,hypo_task_i) = np.unravel_index(id,(200,18,l1s.size,len(subsamples),4,4))
-
-if hypo_task_i!=2 and true_task_i!=2:
-    pass #throw_a_tantrum
-
+sub = subsamples[s_i]
 L2_matched = hypo_task_i==0
 if L2_matched:
     alphas = [0.99999,0.9999,0.999,0.99,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.03,0.01,0.001,1e-4,1e-5]
 else:
     alphas = [1-1e-5,1-1e-4,0.999,0.99,0.95,0.9,0.85,0.75,0.5,1e-3,1e-4,1e-5]
 alpha = alphas[a_i]
-sub = subsamples[s_i]
 l1 = l1s[l_i]
+trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
+matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
+fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)
+run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub)
+#!!! end move
+
+L2_matched = hypo_task_i==0
+
 np.random.seed(1234567)
 torch.manual_seed(1234567)
 
-trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
-matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
+shapes = [[d[0], in_shape[0]-2, in_shape[1]-2],[d[1], np.prod((in_shape-4))],[d[2]]]
+print(shapes)
+shapes = [[d[0], 6, 4],[d[1], 10],[d[2]]]
+print(shapes)
+
 task_maps = [(lambda x: x), (lambda x: x%2), (lambda x: np.isin(x,[0,6,8,9]).astype(int)), (lambda x: x)]
 
-pen = 'cross_rc'
-
-training_data = CustomDataset(images[:n_train,:,:,:],task_maps[true_task_i](digits.target[:n_train]))
-test_data = CustomDataset(images[n_train:,:,:,:],task_maps[true_task_i](digits.target[n_train:]))
+pen = 'cross_rc' #specifies the C_map used in the paper
 
 # Create data loaders.
+training_data = CustomDataset(images[:n_train,:,:,:],task_maps[true_task_i](digits.target[:n_train]))
+test_data = CustomDataset(images[n_train:,:,:,:],task_maps[true_task_i](digits.target[n_train:]))
 batch_size = 64
 train_dataloader = DataLoader(training_data, batch_size=batch_size)
 test_dataloader = DataLoader(test_data, batch_size=batch_size)
 
 
-
 if true_task_i>0:
+    #train data-generator
     epochs = 60
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         train_acts = train(train_dataloader, model, loss_fn, optimizer)
         test_acts = test(test_dataloader, model)
 else:
+    #use untrained network
     train_acts = test(train_dataloader, model)
     test_acts = test(test_dataloader, model)
 
+#compute predictability on validation data of each possible task z_i from simulated responses y_i
 Cs = np.logspace(-3,4,22)
-task_alignments = np.zeros((2,len(task_maps)-1,Cs.size))
+# metrics x possible z_i's x l2 regularization
+task_alignments = np.zeros((2,len(task_maps)-1,Cs.size)) 
 for task_i in range(1,len(task_maps)):
     for Ci,C in enumerate(Cs):
         LR = LogisticRegression(C=C)
         LR.fit(train_acts,task_maps[task_i](digits.target[:n_train]))
-        task_alignments[0,task_i-1,Ci] = LR.score(test_acts,task_maps[task_i](digits.target[n_train:]))
+        #negative log-likelihood
+        task_alignments[0,task_i-1,Ci] = LR.score(test_acts,task_maps[task_i](digits.target[n_train:])) 
+        #accuracy
         task_alignments[1,task_i-1,Ci] = np.mean(LR.predict_log_proba(test_acts)[np.arange(test_acts.shape[0]),task_maps[task_i](digits.target[n_train:]).astype(int)])
 
 
@@ -193,6 +220,7 @@ print("Done training!")
 np.random.seed(trial)
 torch.manual_seed(trial)
 
+#randomly choose a fraction of simulated neurons for use as data
 N = train_acts.shape[1]
 if sub is not None and sub<1:
     fake_neurons_measured = np.random.choice(N,size=int(N*sub),replace=False)
@@ -203,6 +231,9 @@ else:
 N_meas = fake_neurons_measured.size
 
 class NetMatcher(nn.Module):
+    '''
+    Network model with the same structure as Net class, but which can be used for joint-training
+    '''
     def __init__(self,in_shape = np.array([8,6]), d=[8,16,128,10],N_meas=None):
         super(NetMatcher, self).__init__()
         self.conv1 = nn.Conv2d(1, d[0], 3, 1)
@@ -238,9 +269,6 @@ class NetMatcher(nn.Module):
         return output, act_output
 
 
-#training_data_act_only = CustomDataset(images[:n_train,:,:,:],train_acts)
-#test_data_act_only = CustomDataset(images[n_train:,:,:,:],test_acts)
-
 training_data_both = CustomDataset(images[:n_train,:,:,:],[task_maps[hypo_task_i](digits.target[:n_train]),train_acts])
 test_data_both = CustomDataset(images[n_train:,:,:,:],[task_maps[hypo_task_i](digits.target[n_train:]),test_acts])
 
@@ -249,18 +277,40 @@ test_dataloader2 = DataLoader(test_data_both, batch_size=batch_size)
 
 
 def joint_loss(pred,y,lossfns,alpha=1.0):
+    '''
+    cost function used for joint-training
+    Args:
+        pred: length-2 list of predicted model ouputs for hypothesized task and neural responses
+        y: length-2 list of target ouputs for hypothesized task and neural responses
+        lossfns: length-2 list of pytorch loss functions for hypothesized task and neural responses
+        alpha: hyperparameter weighting these two cost functions (alpha = beta/(1+beta))
+    Returns:
+        joint cost function (pytorch loss function)
+    '''
     return alpha*lossfns[0](pred[0],y[0])+(1-alpha)*lossfns[1](pred[1],y[1])
 
 def L2reg_loss(pred,y,loss,model,alpha=1.0):
+    '''
+    cost function using L2 regularization instead of a hypothesized task
+    Args:
+        pred: predicted model ouputs for neural responses
+        y: target ouputs for neural responses
+        loss: pytorch loss function for neural responses
+        model: NetMatcher object with joint-trained parameters
+        alpha: hyperparameter weighting these two cost functions (alpha = beta/(1+beta))
+    Returns:
+        cost function (pytorch loss function)
+    '''
     L2_reg = 0
-    cnt = 0
+    count = 0
     for p in set(model.parameters())-set(model.fc2.parameters())-set(model.fc_act.parameters()):
         L2_reg += torch.norm(p,2)
-        cnt+=1
-    return alpha*L2_reg/cnt+(1-alpha)*loss(pred,y)
+        count+=1
+    return alpha*L2_reg/count+(1-alpha)*loss(pred,y)
 
 
 def make_sparse_hard(model2):
+    '''applies hard threshholding to a NetMatcher object model2 as described in eq S12'''
     W = model2.fc_act.weight.data
     vals,inds = torch.max(W,axis=1,keepdims=False)
     rep = torch.zeros(W.shape)
@@ -269,6 +319,7 @@ def make_sparse_hard(model2):
     model2.fc_act.weight.grad[rep==0] = 0
 
 def make_sparse(model2):
+    '''an alternative threshholding scheme not used in the paper'''
     W = model2.fc_act.weight.data
     thresh=1e-2
     model2.fc_act.weight.data = torch.where(W>thresh,W,torch.zeros((1,)))
@@ -276,6 +327,13 @@ def make_sparse(model2):
 
 
 def train_joint(dataloader, model, lossfns, optimizer, alpha=1.0, l1=0.0, freeze_small=False, pen = 'l1',L2_matched=True):
+    '''
+    perform one epoch of joint-training
+    Args:
+    
+    Returns:
+    
+    '''
     size = len(dataloader.dataset)
     acts = []
     epoch_loss = 0
@@ -436,8 +494,6 @@ for t in range(epochs):
 W_part = model2.fc_act.weight.detach().numpy()
 W = np.zeros((N,N))
 W[fake_neurons_measured,:] = W_part
-
-fname = 'digits_headlr_'+size+'netmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)
 
 np.savez(fname,train_loss=loss,test_losses=losses,task_alignments=task_alignments,
     sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=alignment(np.abs(W)>0,shapes),layer_cm=layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]))
