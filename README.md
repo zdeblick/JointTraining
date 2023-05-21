@@ -26,6 +26,20 @@ This code was used for all the analyses in PAPER!!!. If you use it to publish an
 * `slurm_script.sh`: script for submitting jobs on a SLURM computing cluster
 
 
+# Result Reproduction
+
+## Two-Layer-Linear Network Analyses (2LL - Section 3)
+1. Edit `slurm_script.sh` to run `digits_sim_script.py` with array_ids 0-179 then run `sbatch slurm_script.sh`
+2. When it is finished running, run `python3 2LL_summary_script.py`
+3. You can now run the 2LL cells in Figures.ipynb
+
+## Convolutional Neural Network on Digits Dataset Analyses (digits - Section 4)
+1. Edit `slurm_script.sh` to run `digits_run_main.py` with array_ids 0-!!! then run `sbatch slurm_script.sh`
+2. When it is finished running, run `python3 digits_summary_script.py`
+3. You can now run the digits cells in Figures.ipynb, except the subsampling one
+4. Edit `slurm_script.sh` to run `digits_run_subsample.py` with array_ids 0-!!! then run `sbatch slurm_script.sh`
+5. When it is finished running, run `python3 digits_subsample_sum_script.py`
+6. You can now run all digits cells in Figures.ipynb
 
 
 
