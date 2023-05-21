@@ -9,4 +9,4 @@
 #SBATCH --chdir=/allen/programs/braintv/workgroups/cortexmodels/daniel.zdeblick/JointTraining
 
 
-/home/daniel.zdeblick/anaconda3/bin/python3 digits_sim_script.py
+/home/daniel.zdeblick/anaconda3/bin/python3 digits_run_main.py
