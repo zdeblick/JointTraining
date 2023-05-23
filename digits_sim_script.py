@@ -378,128 +378,128 @@ def alignment(W,shapes):
 
 
 def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub):
-os.chdir('digits_results')
+    os.chdir('digits_results')
 
-#Load the digits dataset
-digits = datasets.load_digits()
-images = np.expand_dims(digits.images[:,:,1:-1],1)
-in_shape = np.array([8,6],dtype='int')
-n_train = 1024 # number of samples in training set
-d = [16,32,128,10]
-model = Net(in_shape=in_shape, d=d)
-model = model.float()
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    
-L2_matched = hypo_task_i==0
+    #Load the digits dataset
+    digits = datasets.load_digits()
+    images = np.expand_dims(digits.images[:,:,1:-1],1)
+    in_shape = np.array([8,6],dtype='int')
+    n_train = 1024 # number of samples in training set
+    d = [16,32,128,10]
+    model = Net(in_shape=in_shape, d=d)
+    model = model.float()
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-np.random.seed(1234567)
-torch.manual_seed(1234567)
+    L2_matched = hypo_task_i==0
 
-shapes = [[d[0], in_shape[0]-2, in_shape[1]-2],[d[1], np.prod((in_shape-4))],[d[2]]]
-print(shapes)
-shapes = [[d[0], 6, 4],[d[1], 10],[d[2]]]
-print(shapes)
+    np.random.seed(1234567)
+    torch.manual_seed(1234567)
 
-task_maps = [(lambda x: x), (lambda x: x%2), (lambda x: np.isin(x,[0,6,8,9]).astype(int)), (lambda x: x)]
+    shapes = [[d[0], in_shape[0]-2, in_shape[1]-2],[d[1], np.prod((in_shape-4))],[d[2]]]
+    print(shapes)
+    shapes = [[d[0], 6, 4],[d[1], 10],[d[2]]]
+    print(shapes)
 
-pen = 'cross_rc' #specifies the C_map used in the paper
+    task_maps = [(lambda x: x), (lambda x: x%2), (lambda x: np.isin(x,[0,6,8,9]).astype(int)), (lambda x: x)]
 
-# Create data loaders for training the data-generator.
-training_data = CustomDataset(images[:n_train,:,:,:],task_maps[true_task_i](digits.target[:n_train]))
-test_data = CustomDataset(images[n_train:,:,:,:],task_maps[true_task_i](digits.target[n_train:]))
-batch_size = 64
-train_dataloader = DataLoader(training_data, batch_size=batch_size)
-test_dataloader = DataLoader(test_data, batch_size=batch_size)
+    pen = 'cross_rc' #specifies the C_map used in the paper
+
+    # Create data loaders for training the data-generator.
+    training_data = CustomDataset(images[:n_train,:,:,:],task_maps[true_task_i](digits.target[:n_train]))
+    test_data = CustomDataset(images[n_train:,:,:,:],task_maps[true_task_i](digits.target[n_train:]))
+    batch_size = 64
+    train_dataloader = DataLoader(training_data, batch_size=batch_size)
+    test_dataloader = DataLoader(test_data, batch_size=batch_size)
 
 
-if true_task_i>0:
-    #train data-generator
-    epochs = 60
+    if true_task_i>0:
+        #train data-generator
+        epochs = 60
+        for t in range(epochs):
+            print(f"Epoch {t+1}\n-------------------------------")
+            train_acts = train(train_dataloader, model, loss_fn, optimizer)
+            test_acts = test(test_dataloader, model)
+    else:
+        #use untrained network
+        train_acts = test(train_dataloader, model)
+        test_acts = test(test_dataloader, model)
+
+    #compute predictability on validation data of each possible task z_i from simulated responses y_i
+    Cs = np.logspace(-3,4,22)
+    # metrics x possible z_i's x l2 regularization
+    task_alignments = np.zeros((2,len(task_maps)-1,Cs.size)) 
+    for task_i in range(1,len(task_maps)):
+        for Ci,C in enumerate(Cs):
+            LR = LogisticRegression(C=C)
+            LR.fit(train_acts,task_maps[task_i](digits.target[:n_train]))
+            #negative log-likelihood
+            task_alignments[0,task_i-1,Ci] = LR.score(test_acts,task_maps[task_i](digits.target[n_train:])) 
+            #accuracy
+            task_alignments[1,task_i-1,Ci] = np.mean(LR.predict_log_proba(test_acts)[np.arange(test_acts.shape[0]),task_maps[task_i](digits.target[n_train:]).astype(int)])
+
+
+    print("Done training!")
+    np.random.seed(trial)
+    torch.manual_seed(trial)
+
+    #randomly choose a fraction of simulated neurons for use as data
+    N = train_acts.shape[1]
+    if sub is not None and sub<1:
+        fake_neurons_measured = np.random.choice(N,size=int(N*sub),replace=False)
+        train_acts = train_acts[:,fake_neurons_measured]
+        test_acts = test_acts[:,fake_neurons_measured]
+    else:
+        fake_neurons_measured = np.arange(N)
+    N_meas = fake_neurons_measured.size
+
+    # Create training and validation data loaders for joint-training
+    training_data_both = CustomDataset(images[:n_train,:,:,:],[task_maps[hypo_task_i](digits.target[:n_train]),train_acts])
+    test_data_both = CustomDataset(images[n_train:,:,:,:],[task_maps[hypo_task_i](digits.target[n_train:]),test_acts])
+
+    train_dataloader2 = DataLoader(training_data_both, batch_size=batch_size)
+    test_dataloader2 = DataLoader(test_data_both, batch_size=batch_size)
+
+    # initialize the joint-training model and partition its parameters into those for theta_u (base_params), theta_y (act_head_params), and theta_z (task_head_params)
+    model2 = NetMatcher(d=d,N_meas=N_meas)
+    model2 = model2.float()
+    all_params = set(model2.parameters())
+    task_head_params = set(model2.fc2.parameters())
+    act_head_params = set(model2.fc_act.parameters())
+    base_params = all_params-task_head_params-act_head_params
+    base_params = list(base_params)
+    task_head_params = list(task_head_params)
+    act_head_params = list(act_head_params)
+    # initialize the optimizer and learning schedule, with modified learning rates for the different thetas as described in Section S2
+    init_lr=1e-3
+    optimizer2 = torch.optim.Adam([{'params':base_params},{'params':task_head_params,'lr':init_lr/alpha},{'params':act_head_params,'lr':init_lr/(1-alpha)}], lr=init_lr)
+    epochs = 300
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer2,verbose=True,factor=0.5,patience=20,min_lr = 1e-4)
+    #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer2,epochs,verbose=False,eta_min = 1e-4)
+
+    lossfns = (F.cross_entropy, F.mse_loss)
+
+    #Perform joint-training
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        train_acts = train(train_dataloader, model, loss_fn, optimizer)
-        test_acts = test(test_dataloader, model)
-else:
-    #use untrained network
-    train_acts = test(train_dataloader, model)
-    test_acts = test(test_dataloader, model)
+        if t < 150:
+            # for the first 150 epochs, apply C_map regularization, no thresholding, keep learning rates for theta_y and theta_z fixed
+            _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha, l1=l1, pen=pen, L2_matched=L2_matched)
+            loss+=30 #prevents scheduler from being tripped at epoch 150
+            scheduler.step(loss)
+            optimizer2.param_groups[1]['lr'] = init_lr/alpha
+            optimizer2.param_groups[2]['lr'] = init_lr/(1-alpha)
+        else:
+            # for the last 150 epochs, no C_map regularization, instead threshholding
+            _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha,freeze_small=True,L2_matched=L2_matched)
+            scheduler.step(loss)
+        _, losses = test_joint(test_dataloader2, model2, lossfns, L2_matched)
+    # add back in rows that were not ''recorded'' for consistency
+    W_part = model2.fc_act.weight.detach().numpy()
+    W = np.zeros((N,N))
+    W[fake_neurons_measured,:] = W_part
 
-#compute predictability on validation data of each possible task z_i from simulated responses y_i
-Cs = np.logspace(-3,4,22)
-# metrics x possible z_i's x l2 regularization
-task_alignments = np.zeros((2,len(task_maps)-1,Cs.size)) 
-for task_i in range(1,len(task_maps)):
-    for Ci,C in enumerate(Cs):
-        LR = LogisticRegression(C=C)
-        LR.fit(train_acts,task_maps[task_i](digits.target[:n_train]))
-        #negative log-likelihood
-        task_alignments[0,task_i-1,Ci] = LR.score(test_acts,task_maps[task_i](digits.target[n_train:])) 
-        #accuracy
-        task_alignments[1,task_i-1,Ci] = np.mean(LR.predict_log_proba(test_acts)[np.arange(test_acts.shape[0]),task_maps[task_i](digits.target[n_train:]).astype(int)])
+    np.savez(fname,train_loss=loss,test_losses=losses,task_alignments=task_alignments,
+        sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=alignment(np.abs(W)>0,shapes),layer_cm=layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]))
 
-
-print("Done training!")
-np.random.seed(trial)
-torch.manual_seed(trial)
-
-#randomly choose a fraction of simulated neurons for use as data
-N = train_acts.shape[1]
-if sub is not None and sub<1:
-    fake_neurons_measured = np.random.choice(N,size=int(N*sub),replace=False)
-    train_acts = train_acts[:,fake_neurons_measured]
-    test_acts = test_acts[:,fake_neurons_measured]
-else:
-    fake_neurons_measured = np.arange(N)
-N_meas = fake_neurons_measured.size
-
-# Create training and validation data loaders for joint-training
-training_data_both = CustomDataset(images[:n_train,:,:,:],[task_maps[hypo_task_i](digits.target[:n_train]),train_acts])
-test_data_both = CustomDataset(images[n_train:,:,:,:],[task_maps[hypo_task_i](digits.target[n_train:]),test_acts])
-
-train_dataloader2 = DataLoader(training_data_both, batch_size=batch_size)
-test_dataloader2 = DataLoader(test_data_both, batch_size=batch_size)
-
-# initialize the joint-training model and partition its parameters into those for theta_u (base_params), theta_y (act_head_params), and theta_z (task_head_params)
-model2 = NetMatcher(d=d,N_meas=N_meas)
-model2 = model2.float()
-all_params = set(model2.parameters())
-task_head_params = set(model2.fc2.parameters())
-act_head_params = set(model2.fc_act.parameters())
-base_params = all_params-task_head_params-act_head_params
-base_params = list(base_params)
-task_head_params = list(task_head_params)
-act_head_params = list(act_head_params)
-# initialize the optimizer and learning schedule, with modified learning rates for the different thetas as described in Section S2
-init_lr=1e-3
-optimizer2 = torch.optim.Adam([{'params':base_params},{'params':task_head_params,'lr':init_lr/alpha},{'params':act_head_params,'lr':init_lr/(1-alpha)}], lr=init_lr)
-epochs = 300
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer2,verbose=True,factor=0.5,patience=20,min_lr = 1e-4)
-#scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer2,epochs,verbose=False,eta_min = 1e-4)
-
-lossfns = (F.cross_entropy, F.mse_loss)
-
-#Perform joint-training
-for t in range(epochs):
-    print(f"Epoch {t+1}\n-------------------------------")
-    if t < 150:
-        # for the first 150 epochs, apply C_map regularization, no thresholding, keep learning rates for theta_y and theta_z fixed
-        _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha, l1=l1, pen=pen, L2_matched=L2_matched)
-        loss+=30 #prevents scheduler from being tripped at epoch 150
-        scheduler.step(loss)
-        optimizer2.param_groups[1]['lr'] = init_lr/alpha
-        optimizer2.param_groups[2]['lr'] = init_lr/(1-alpha)
-    else:
-        # for the last 150 epochs, no C_map regularization, instead threshholding
-        _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha,freeze_small=True,L2_matched=L2_matched)
-        scheduler.step(loss)
-    _, losses = test_joint(test_dataloader2, model2, lossfns, L2_matched)
-# add back in rows that were not ''recorded'' for consistency
-W_part = model2.fc_act.weight.detach().numpy()
-W = np.zeros((N,N))
-W[fake_neurons_measured,:] = W_part
-
-np.savez(fname,train_loss=loss,test_losses=losses,task_alignments=task_alignments,
-    sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=alignment(np.abs(W)>0,shapes),layer_cm=layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]))
-
-print('Done',fname)
+    print('Done',fname)
