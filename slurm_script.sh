@@ -5,8 +5,7 @@
 #SBATCH --time=01:00:00               # Time limit hrs:min:sec
 #SBATCH --output=logs/JT_%A_%a.log  #/allen/programs/braintv/workgroups/cortexmodels/daniel.zdeblick/JointTraining/logs
 #SBATCH --partition braintv         # Partition used for processing
-#SBATCH --array 0-29999 #13679
+#SBATCH --array 0 #-43679
 #SBATCH --chdir=/allen/programs/braintv/workgroups/cortexmodels/daniel.zdeblick/JointTraining
 
-
-/home/daniel.zdeblick/anaconda3/bin/python3 digits_sim_script.py
+/home/daniel.zdeblick/anaconda3/bin/python3 digits_run_main.py
