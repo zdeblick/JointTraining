@@ -1,11 +1,13 @@
 #!/home/daniel.zdeblick/anaconda3/bin/python3
 import numpy as np
 import os
+from digits_sim_script import *
 
 array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 #array_id_str = 'PBS_ARRAYID' #pbs
 
 l1s = np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
+pen='cross_rc'
 subsamples = [0.05,0.1,0.25,0.5]
 
 id = os.getenv(array_id_str)
