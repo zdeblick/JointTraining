@@ -104,12 +104,13 @@ def train(dataloader, model, loss_fn, optimizer):
     return np.vstack(acts)
         
         
-def test(dataloader, model):
+def test(dataloader, model, loss_fn):
     '''
     compute and print evaluation metrics on a model
     Args:
         dataloader: DataLoader object supplying evaluation data
         model: Net object that will be evaluated
+        loss_fn: pytorch loss function applied to data for testing (https://pytorch.org/docs/stable/nn.html#loss-functions)
     Returns:
         unit activites (u_i), a samples x units np.array
     '''
@@ -419,11 +420,11 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub):
         for t in range(epochs):
             print(f"Epoch {t+1}\n-------------------------------")
             train_acts = train(train_dataloader, model, loss_fn, optimizer)
-            test_acts = test(test_dataloader, model)
+            test_acts = test(test_dataloader, model, loss_fn)
     else:
         #use untrained network
-        train_acts = test(train_dataloader, model)
-        test_acts = test(test_dataloader, model)
+        train_acts = test(train_dataloader, model, loss_fn)
+        test_acts = test(test_dataloader, model, loss_fn)
 
     #compute predictability on validation data of each possible task z_i from simulated responses y_i
     Cs = np.logspace(-3,4,22)
