@@ -253,6 +253,8 @@ def train_joint(dataloader, model, lossfns, optimizer, alpha=1.0, l1=0.0, freeze
             penalty = torch.norm(torch.mul(W,torch.sum(W,1,keepdims=True)-W),1)
         elif pen=='l1':
             penalty = torch.norm(model.fc_act.weight,1)
+        elif pen is None:
+            penalty = 0
         if L2_matched:
             loss = L2reg_loss(act, y[1], lossfns[1], model, alpha=alpha) + (1-alpha)*l1*penalty
         else:
@@ -378,7 +380,7 @@ def alignment(W,shapes):
 
 
 
-def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub):
+def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial):
     os.chdir('digits_results')
 
     #Load the digits dataset
@@ -403,8 +405,6 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub):
     print(shapes)
 
     task_maps = [(lambda x: x), (lambda x: x%2), (lambda x: np.isin(x,[0,6,8,9]).astype(int)), (lambda x: x)]
-
-    pen = 'cross_rc' #specifies the C_map used in the paper
 
     # Create data loaders for training the data-generator.
     training_data = CustomDataset(images[:n_train,:,:,:],task_maps[true_task_i](digits.target[:n_train]))
@@ -483,7 +483,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub):
     #Perform joint-training
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        if t < 150:
+        if t < 150 or pen is None:
             # for the first 150 epochs, apply C_map regularization, no thresholding, keep learning rates for theta_y and theta_z fixed
             _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha, l1=l1, pen=pen, L2_matched=L2_matched)
             loss+=30 #prevents scheduler from being tripped at epoch 150
@@ -499,8 +499,9 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub):
     W_part = model2.fc_act.weight.detach().numpy()
     W = np.zeros((N,N))
     W[fake_neurons_measured,:] = W_part
-
+    algn = alignment(np.abs(W)>0,shapes) if pen is not None else None
+    lcm = layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]) if pen is not None else layer_cm(np.abs(W),[np.prod(s) for s in shapes])
     np.savez(fname,train_loss=loss,test_losses=losses,task_alignments=task_alignments,
-        sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=alignment(np.abs(W)>0,shapes),layer_cm=layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]))
+        sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=algn,layer_cm=lcm)
 
     print('Done',fname)

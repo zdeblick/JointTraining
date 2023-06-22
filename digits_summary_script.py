@@ -8,14 +8,15 @@ savepath = '../digits_summaries/'
 in_shape = np.array([8,6],dtype='int')
 d = [16,32,128,10]
 size='med'
+pen = None #'cross_rc'
+
 
 #size='small'
 #d = [8,16,128,10]
 
-l1s = np.logspace(-6,-2,9)
+l1s = np.array([0]) if pen is None else np.logspace(-6,-2,9)
 trials = 40
 shapes = [[d[0], in_shape[0]-2, in_shape[1]-2],[d[1], np.prod((in_shape-4)*5/4)],[d[2]]]
-pen = 'cross_rc'
 
 
 for true_task_i,hypo_task_i in itertools.product(range(4),range(4)):
@@ -41,17 +42,18 @@ for true_task_i,hypo_task_i in itertools.product(range(4),range(4)):
         for a_i, alpha in enumerate(alphas):
             for l_i, l1 in enumerate(l1s):
                 try:
-                    fname = 'digits_headlr_'+size+'netmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)
+                    fname = 'digits_headlr_'+size+'netmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)
                     D = np.load(fname+'.npz',allow_pickle=True)
                     train_losses[trial,a_i,l_i] = D['train_loss']
                     test_losses[trial,a_i,l_i,:] = D['test_losses']
                     sparsities[trial,a_i,l_i] = D['cpfn']
-                    alignments[trial,a_i,l_i] = D['alignment']
+                    if D['alignment']!=None:
+                        alignments[trial,a_i,l_i] = D['alignment']
                     cms[trial,a_i,l_i,:,:] = D['layer_cm']
                     task_alignments[trial,a_i,l_i,:,:,:] = D['task_alignments']
                 except Exception as e:
                     print(e,trial,a_i,l_i)
-    fname = savepath+'results_headlr_'+size+trained_str+matched_str+'_pen='+pen+'_thresh_hard'
+    fname = savepath+'results_headlr_'+size+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_thresh_hard'
     if not os.path.isfile(fname+'.npz') or True:
         np.savez(fname,train_losses=train_losses,test_losses=test_losses,task_alignments=task_alignments,
                  sparsities=sparsities,alphas=alphas,l1s=l1s,alignments=alignments,d=d,cms=cms)
