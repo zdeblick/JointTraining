@@ -8,8 +8,8 @@ savepath = '../digits_summaries/'
 in_shape = np.array([8,6],dtype='int')
 d = [16,32,128,10]
 size='med'
-#pen = None 
-pen = 'cross_rc'
+pen = None 
+#pen = 'cross_rc'
 
 
 #size='small'

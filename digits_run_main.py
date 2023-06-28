@@ -7,7 +7,7 @@ array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 #array_id_str = 'PBS_ARRAYID' #pbs
 
 pen='cross_rc'
-# pen=None
+#pen=None
 l1s = np.array([0]) if pen is None else np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
 subsamples = [1]
 

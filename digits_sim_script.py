@@ -248,17 +248,19 @@ def train_joint(dataloader, model, lossfns, optimizer, alpha=1.0, l1=0.0, freeze
         if L2_matched:
             loss = L2reg_loss(act, y[1], lossfns[1], model, alpha=alpha)
         else:
-            W = model.fc_act.weight
-            if pen=='cross_rc':
-                W = torch.abs(W)
-                penalty = torch.norm(torch.mul(W,torch.sum(W,1,keepdims=True)+torch.sum(W,0,keepdims=True)-2*W),1)
-            elif pen=='cross_r':
-                penalty = torch.norm(torch.mul(W,torch.sum(W,1,keepdims=True)-W),1)
-            elif pen=='l1':
-                penalty = torch.norm(model.fc_act.weight,1)
-            elif pen is None:
-                penalty = 0
-            loss = joint_loss((pred,act), y, lossfns,alpha=alpha) + (1-alpha)*l1*penalty
+            loss = joint_loss((pred,act), y, lossfns,alpha=alpha)
+        W = model.fc_act.weight
+        if pen=='cross_rc':
+            W = torch.abs(W)
+            penalty = torch.norm(torch.mul(W,torch.sum(W,1,keepdims=True)+torch.sum(W,0,keepdims=True)-2*W),1)
+        elif pen=='cross_r':
+            penalty = torch.norm(torch.mul(W,torch.sum(W,1,keepdims=True)-W),1)
+        elif pen=='l1':
+            penalty = torch.norm(model.fc_act.weight,1)
+        elif pen is None:
+            penalty = 0
+        loss = loss (1-alpha)*l1*penalty
+
 
         # Backpropagation
         optimizer.zero_grad()
