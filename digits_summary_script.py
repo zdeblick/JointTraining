@@ -8,7 +8,8 @@ savepath = '../digits_summaries/'
 in_shape = np.array([8,6],dtype='int')
 d = [16,32,128,10]
 size='med'
-pen = None #'cross_rc'
+#pen = None 
+pen = 'cross_rc'
 
 
 #size='small'
@@ -20,8 +21,6 @@ shapes = [[d[0], in_shape[0]-2, in_shape[1]-2],[d[1], np.prod((in_shape-4)*5/4)]
 
 
 for true_task_i,hypo_task_i in itertools.product(range(4),range(4)):
-    if true_task_i!=2 and hypo_task_i!=2:
-        pass
     trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
     matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
     L2_matched = hypo_task_i==0

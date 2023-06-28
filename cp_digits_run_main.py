@@ -13,6 +13,7 @@ subsamples = [1]
 
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
+id+=20000
 (trial,a_i,l_i,s_i,true_task_i,hypo_task_i) = np.unravel_index(id,(200,18,l1s.size,len(subsamples),4,1))
 sub = subsamples[s_i]
 L2_matched = hypo_task_i==0
