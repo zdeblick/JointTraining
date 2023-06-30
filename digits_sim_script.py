@@ -259,7 +259,7 @@ def train_joint(dataloader, model, lossfns, optimizer, alpha=1.0, l1=0.0, freeze
             penalty = torch.norm(model.fc_act.weight,1)
         elif pen is None:
             penalty = 0
-        loss = loss (1-alpha)*l1*penalty
+        loss = loss + (1-alpha)*l1*penalty
 
 
         # Backpropagation
@@ -382,7 +382,7 @@ def alignment(W,shapes):
 
 
 
-def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial):
+def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300):
     os.chdir('digits_results')
 
     #Load the digits dataset
@@ -418,8 +418,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial):
 
     if true_task_i>0:
         #train data-generator
-        epochs = 60
-        for t in range(epochs):
+        for t in range(60):
             print(f"Epoch {t+1}\n-------------------------------")
             train_acts = train(train_dataloader, model, loss_fn, optimizer)
             test_acts = test(test_dataloader, model, loss_fn)
@@ -485,7 +484,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial):
     #Perform joint-training
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        if t < 150 or pen is None:
+        if t < epochs/2 or pen is None:
             # for the first 150 epochs, apply C_map regularization, no thresholding, keep learning rates for theta_y and theta_z fixed
             _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha, l1=l1, pen=pen, L2_matched=L2_matched)
             loss+=30 #prevents scheduler from being tripped at epoch 150
