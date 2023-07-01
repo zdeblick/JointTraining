@@ -21,7 +21,7 @@ true_task_i=3
 hypo_task_i=3
 in_shape = np.array([8,6])    
 N = int(d[0]*np.prod(in_shape-2)+d[1]*np.prod((in_shape-4))+d[1]*np.prod((in_shape-4)/2)+d[2])
-epochs = [150,300,450,600]
+epochs = [150,300,450,600,900,1200,1500]
 
 train_losses = np.nan*np.ones((trials,len(alphas),l1s.size,len(epochs)))
 test_losses = np.nan*np.ones((trials,len(alphas),l1s.size,len(epochs),3))
