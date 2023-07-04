@@ -9,7 +9,8 @@ array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 l1s = np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
 pen='cross_rc'
 subsamples = [1]
-epochs = [1800, 2100, 2400]
+epochs = [300, 1200, 2400]
+nonlinear = False
 
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
@@ -27,5 +28,5 @@ alpha = alphas[a_i]
 l1 = l1s[l_i]
 trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
 matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
-fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)+('_nepochs='+str(n_eps))*(n_eps!=300)
-run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=n_eps)
+fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)+('_nepochs='+str(n_eps))*(n_eps!=300)+'_linear'*(not nonlinear)
+run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=n_eps,nonlinear=nonlinear)

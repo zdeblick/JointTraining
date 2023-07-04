@@ -40,7 +40,7 @@ class CustomDataset(Dataset):
 class Net(nn.Module):
     '''The convolutional neural network used as a data-generator (depicted in Figure 3)'''
     
-    def __init__(self,in_shape = np.array([8,6]),d=[8,16,128,10]):
+    def __init__(self,in_shape = np.array([8,6]),d=[8,16,128,10],nonlinear=True):
         '''
         in_shape: dimensions of input image
         d: dimensions of network (#channels in layer 1, #channels in layer 2, #hidden units in layer 3, #of classes in output)
@@ -50,21 +50,25 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(d[0], d[1], 3, 1)
         self.fc1 = nn.Linear(int(d[1]*np.prod((in_shape-4)/2)), d[2])
         self.fc2 = nn.Linear(d[2], d[3])
+        self.nonlinear=nonlinear
 
     def forward(self, x):
         act = []
         x = self.conv1(x)
-        x = F.relu(x)
+        if self.nonlinear:
+            x = F.relu(x)
         act.append(torch.flatten(x, 1))
         x = self.conv2(x)
-        x = F.relu(x)
+        if self.nonlinear:
+            x = F.relu(x)
         mp = [torch.flatten(x, 2)]
         x = F.max_pool2d(x, 2)
         mp.append(torch.flatten(x, 2))
         act.append(torch.flatten(torch.cat(mp,dim=2),1))
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        x = F.relu(x)
+        if self.nonlinear:
+            x = F.relu(x)
         act.append(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
@@ -134,7 +138,7 @@ class NetMatcher(nn.Module):
     '''
     Network model with the same structure as Net class, but which can be used for joint-training
     '''
-    def __init__(self,in_shape = np.array([8,6]), d=[8,16,128,10],N_meas=None):
+    def __init__(self,in_shape = np.array([8,6]), d=[8,16,128,10],N_meas=None,nonlinear=True):
         super(NetMatcher, self).__init__()
         self.conv1 = nn.Conv2d(1, d[0], 3, 1)
         self.conv2 = nn.Conv2d(d[0], d[1], 3, 1)
@@ -144,23 +148,27 @@ class NetMatcher(nn.Module):
         if N_meas is None:
             N_meas = N
         self.fc_act = nn.Linear(N,N_meas)
+        self.nonlinear=True
 #         self.fc_act.weight = torch.nn.Parameter(self.fc_act.weight.data.to_sparse())
 #         torch.nn.init.uniform_(self.fc_act.weight)
 
     def forward(self, x):
         act = []
         x = self.conv1(x)
-        x = F.relu(x)
+        if self.nonlinear:
+            x = F.relu(x)
         act.append(torch.flatten(x, 1))
         x = self.conv2(x)
-        x = F.relu(x)
+        if self.nonlinear:
+            x = F.relu(x)
         mp = [torch.flatten(x, 2)]
         x = F.max_pool2d(x, 2)
         mp.append(torch.flatten(x, 2))
         act.append(torch.flatten(torch.cat(mp,dim=2),1))
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        x = F.relu(x)
+        if self.nonlinear:
+            x = F.relu(x)
         act.append(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
@@ -382,7 +390,7 @@ def alignment(W,shapes):
 
 
 
-def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300):
+def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,nonlinear=True):
     os.chdir('digits_results')
 
     #Load the digits dataset
@@ -391,7 +399,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300):
     in_shape = np.array([8,6],dtype='int')
     n_train = 1024 # number of samples in training set
     d = [16,32,128,10]
-    model = Net(in_shape=in_shape, d=d)
+    model = Net(in_shape=in_shape, d=d, nonlinear=nonlinear)
     model = model.float()
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -463,7 +471,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300):
     test_dataloader2 = DataLoader(test_data_both, batch_size=batch_size)
 
     # initialize the joint-training model and partition its parameters into those for theta_u (base_params), theta_y (act_head_params), and theta_z (task_head_params)
-    model2 = NetMatcher(d=d,N_meas=N_meas)
+    model2 = NetMatcher(d=d,N_meas=N_meas,nonlinear=nonlinear)
     model2 = model2.float()
     all_params = set(model2.parameters())
     task_head_params = set(model2.fc2.parameters())

@@ -21,7 +21,11 @@ true_task_i=3
 hypo_task_i=3
 in_shape = np.array([8,6])    
 N = int(d[0]*np.prod(in_shape-2)+d[1]*np.prod((in_shape-4))+d[1]*np.prod((in_shape-4)/2)+d[2])
-epochs = [150,300,450,600,900,1200,1500,1800,2100,2400]
+nonlinear=False
+if nonlinear:
+    epochs = [150,300,450,600,900,1200,1500,1800,2100,2400]
+else:
+    epochs = [300,1200,2400]
 
 train_losses = np.nan*np.ones((trials,len(alphas),l1s.size,len(epochs)))
 test_losses = np.nan*np.ones((trials,len(alphas),l1s.size,len(epochs),3))
@@ -37,7 +41,7 @@ for trial in range(trials):
         for a_i, alpha in enumerate(alphas):
             for l_i, l1 in enumerate(l1s):
                 try:
-                    fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_nepochs='+str(n_eps))*(n_eps!=300)
+                    fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_nepochs='+str(n_eps))*(n_eps!=300)+('_linear')*(not nonlinear)
                     D = np.load(fname+'.npz',allow_pickle=True)
                     train_losses[trial,a_i,l_i,e_i] = D['train_loss']
                     test_losses[trial,a_i,l_i,e_i,:] = D['test_losses']
@@ -47,7 +51,7 @@ for trial in range(trials):
                 except Exception as e:
                     print(e,trial,a_i,l_i,e_i)
                     stop
-fname = savepath+'results_headlr_'+size+trained_str+matched_str+'_pen='+pen+'_epochs'
+fname = savepath+'results_headlr_'+size+trained_str+matched_str+'_pen='+pen+'_epochs'+('_linear')*(not nonlinear)
 if not os.path.isfile(fname+'.npz') or True:
     np.savez(fname,train_losses=train_losses,test_losses=test_losses,
              cpfns=cpfns,alphas=alphas,l1s=l1s,alignments=alignments,d=d,cms=cms,epochs=epochs)
