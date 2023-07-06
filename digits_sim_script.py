@@ -62,7 +62,10 @@ class Net(nn.Module):
         if self.nonlinear:
             x = F.relu(x)
         mp = [torch.flatten(x, 2)]
-        x = F.max_pool2d(x, 2)
+        if self.nonlinear:
+            x = F.max_pool2d(x, 2)
+        else:
+            x = F.avg_pool2d(x, 2)
         mp.append(torch.flatten(x, 2))
         act.append(torch.flatten(torch.cat(mp,dim=2),1))
         x = torch.flatten(x, 1)
@@ -148,7 +151,7 @@ class NetMatcher(nn.Module):
         if N_meas is None:
             N_meas = N
         self.fc_act = nn.Linear(N,N_meas)
-        self.nonlinear=True
+        self.nonlinear=nonlinear
 #         self.fc_act.weight = torch.nn.Parameter(self.fc_act.weight.data.to_sparse())
 #         torch.nn.init.uniform_(self.fc_act.weight)
 
@@ -162,7 +165,10 @@ class NetMatcher(nn.Module):
         if self.nonlinear:
             x = F.relu(x)
         mp = [torch.flatten(x, 2)]
-        x = F.max_pool2d(x, 2)
+        if self.nonlinear:
+            x = F.max_pool2d(x, 2)
+        else:
+            x = F.avg_pool2d(x,	2)
         mp.append(torch.flatten(x, 2))
         act.append(torch.flatten(torch.cat(mp,dim=2),1))
         x = torch.flatten(x, 1)
