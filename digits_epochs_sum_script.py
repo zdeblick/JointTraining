@@ -25,7 +25,7 @@ nonlinear=False
 if nonlinear:
     epochs = [150,300,450,600,900,1200,1500,1800,2100,2400]
 else:
-    epochs = [300,1200,2400]
+    epochs = [300,600,900,1200,1800,2400]
 
 train_losses = np.nan*np.ones((trials,len(alphas),l1s.size,len(epochs)))
 test_losses = np.nan*np.ones((trials,len(alphas),l1s.size,len(epochs),3))
