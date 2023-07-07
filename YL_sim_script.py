@@ -9,10 +9,10 @@ import torch.nn.functional as F
 from helpers import *
 from torch.utils.data import Dataset, DataLoader
 
-# os.chdir('YL_results')
+os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
-id = 1
+
 Prange = [10,40]
 Srange = [10,41]
 Nrange = [10,32]
@@ -24,7 +24,7 @@ torch.manual_seed(id)
 # trues=0
 # falses=0
 # for id in range(20000):
-if True
+if True:
     np.random.seed(id)
     # hyperparameters of simulation
     # P = np.random.randint(Prange[0],Prange[1]+1)
@@ -59,7 +59,7 @@ hAxy = Y@np.linalg.pinv(X)
 Cval_ind = np.sum(np.square(Yv-hAxy @ Xv))
 
 # val loss of Joint Training
-betas = [0]#np.hstack((0,np.logspace(-5,2,2)))
+betas = np.hstack((0,np.logspace(-5,2,15)))
 
 class Net(nn.Module):
     '''fits Y-shaped network model to data via joint-training'''
@@ -103,7 +103,7 @@ for beta in betas:
         
 print(P,S,N,M,Q)
 print(Cval_ind,Cval_JT)
-#np.savez('YL_id='+str(id),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=N,M=M,Q=Q)
+np.savez('YL_id='+str(id),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=N,M=M,Q=Q)
 
 
 

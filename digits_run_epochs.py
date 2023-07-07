@@ -9,7 +9,7 @@ array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 l1s = np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
 pen='cross_rc'
 subsamples = [1]
-epochs = [600, 900, 1800]
+epochs = [150, 450, 750]
 nonlinear = False
 
 id = os.getenv(array_id_str)
