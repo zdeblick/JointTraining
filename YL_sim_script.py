@@ -32,7 +32,7 @@ if True:
     N = np.random.randint(Nrange[0],Nrange[1]+1)
     M = np.random.randint(Mrange[0],Mrange[1]+1)
     Q = np.random.randint(Qrange[0],Qrange[1]+1)
-    P = max(S,Q+M)+10
+    P = 100
 #     if N<=np.min([P,S,M+Q]):
 #         trues+=1
 #     else:
