@@ -13,7 +13,7 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-Prange = [10,40]
+Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]
 Mrange = [5,20]
@@ -21,24 +21,23 @@ Qrange = [5,20]
 Pval = 2000
 
 torch.manual_seed(id)
-# trues=0
-# falses=0
-# for id in range(20000):
+trues=0
+falses=0
+#for id in range(20000):
 if True:
     np.random.seed(id)
     # hyperparameters of simulation
-    # P = np.random.randint(Prange[0],Prange[1]+1)
+    P = np.random.randint(Prange[0],Prange[1]+1)
     S = np.random.randint(Srange[0],Srange[1]+1)
     N = np.random.randint(Nrange[0],Nrange[1]+1)
     M = np.random.randint(Mrange[0],Mrange[1]+1)
     Q = np.random.randint(Qrange[0],Qrange[1]+1)
-    P = 100
-#     if N<=np.min([P,S,M+Q]):
-#         trues+=1
-#     else:
-#         falses+=1
-# print(trues,falses)
-# stop
+    if N<=np.min([P,S,M+Q]):
+        trues+=1
+    else:
+        falses+=1
+print(trues,falses)
+#stop
 sx = 1
 sy = 1
 sz = 1
@@ -54,9 +53,6 @@ Z = Bxz @ X + sz*np.random.normal(size=[Q,P])
 # Val data
 Xv = sx*np.random.normal(size=[S,Pval])
 Yv = Axy @ Xv + sy*np.random.normal(size=[M,Pval])
-# val loss of simple linear regression (no z)
-hAxy = Y@np.linalg.pinv(X)
-Cval_ind = np.sum(np.square(Yv-hAxy @ Xv))
 
 # val loss of Joint Training
 betas = np.hstack((0,np.logspace(-5,2,15)))
@@ -75,6 +71,11 @@ class Net(nn.Module):
         y = self.A(x)
         z = self.B(x)
         return z, y
+
+## val loss of simple linear regression (no z)
+# hAxy = Y@np.linalg.pinv(X)
+# Cval_ind = np.sum(np.square(Yv-hAxy @ Xv))
+
 
 Cval_JT = np.inf
 epochs = 5000
@@ -100,6 +101,8 @@ for beta in betas:
     loss_val = np.sum(np.square(Yv-hA @ hW @ Xv))
     if loss_val<Cval_JT:
         Cval_JT = loss_val
+    if beta==0:
+        Cval_ind = loss_val
         
 print(P,S,N,M,Q)
 print(Cval_ind,Cval_JT)
