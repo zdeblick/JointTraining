@@ -19,6 +19,8 @@ Nrange = [10,32]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
+epochs = 1000
+
 
 torch.manual_seed(id)
 trues=0
@@ -78,7 +80,6 @@ class Net(nn.Module):
 
 
 Cval_JT = np.inf
-epochs = 5000
 lossfns = (F.mse_loss,F.mse_loss)
 
 for beta in betas:
@@ -106,7 +107,7 @@ for beta in betas:
         
 print(P,S,N,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=N,M=M,Q=Q)
+np.savez('YL_id='+str(id)+'_neps='+str(epochs),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=N,M=M,Q=Q)
 
 
 
