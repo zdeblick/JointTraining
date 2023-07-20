@@ -13,13 +13,14 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
+L = 2
 Prange = [35,50]
 Srange = [10,41]
-Nrange = [10,32]
+Nrange = [14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
-epochs = 10000
+epochs = 1000
 
 
 torch.manual_seed(id)
@@ -31,10 +32,10 @@ if True:
     # hyperparameters of simulation
     P = np.random.randint(Prange[0],Prange[1]+1)
     S = np.random.randint(Srange[0],Srange[1]+1)
-    N = np.random.randint(Nrange[0],Nrange[1]+1)
+    Ns = [np.random.randint(Nrange[0],Nrange[1]+1) for i in range(L)]
     M = np.random.randint(Mrange[0],Mrange[1]+1)
     Q = np.random.randint(Qrange[0],Qrange[1]+1)
-    if N<=np.min([P,S,M+Q]):
+    if np.min(Ns)<=np.min([P,S,M+Q]):
         trues+=1
     else:
         falses+=1
@@ -62,14 +63,19 @@ betas = np.hstack((0,np.logspace(-5,2,15)))
 class Net(nn.Module):
     '''fits Y-shaped network model to data via joint-training'''
     
-    def __init__(self,S,N,M,Q):
+    def __init__(self,S,Ns,M,Q):
+        if type(Ns) is int:
+            Ns = [int(Ns)]
         super(Net, self).__init__()
-        self.W = nn.Linear(S, N, bias=False)
-        self.A = nn.Linear(N, M, bias=False)
-        self.B = nn.Linear(N, Q, bias=False)
+        self.W = [nn.Linear(S, Ns[0], bias=False)]
+        for i in range(len(Ns)-1):
+            self.W.append(nn.Linear(Ns[i], Ns[i+1], bias=False))
+        self.A = nn.Linear(Ns[-1], M, bias=False)
+        self.B = nn.Linear(Ns[-1], Q, bias=False)
 
     def forward(self, x):
-        x = self.W(x)
+        for Wi in self.W:
+            x = Wi(x)
         y = self.A(x)
         z = self.B(x)
         return z, y
@@ -83,7 +89,7 @@ Cval_JT = np.inf
 lossfns = (F.mse_loss,F.mse_loss)
 
 for beta in betas:
-    model = Net(S,N,M,Q)
+    model = Net(S,Ns,M,Q)
     model = model.float()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
@@ -97,17 +103,15 @@ for beta in betas:
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-    hW = model.W.weight.detach().numpy()
-    hA = model.A.weight.detach().numpy()
-    loss_val = np.sum(np.square(Yv-hA @ hW @ Xv))
+    loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
     if loss_val<Cval_JT:
         Cval_JT = loss_val
     if beta==0:
         Cval_ind = loss_val
         
-print(P,S,N,M,Q)
+print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id)+'_neps='+str(epochs),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=N,M=M,Q=Q)
+np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
 
 
 
