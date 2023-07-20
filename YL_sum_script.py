@@ -16,4 +16,6 @@ for id in range(inds):
         for k in keys:
             big_D[k+'s'][id,ne,:] = D[k]
 
+big_D = {k:np.squeeze(v) for k,v in big_D.items()}
+
 np.savez(savepath+'YL_sum_varySNMQ_L='+str(L),**big_D)
