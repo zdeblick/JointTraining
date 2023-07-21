@@ -6,14 +6,14 @@ savepath = '../YL_summaries/'
 
 L=1
 inds = 20000
-eps = [100,1000,10000]#,5000,10000]
-D0 = np.load('YL2_id=0_neps='+str(eps[0])+'_L='+str(L)+'.npz')
+eps = [10000]#,5000,10000]
+D0 = np.load('YL4_id=0_neps='+str(eps[0])+'_L='+str(L)+'.npz')
 keys = D0.keys()
 big_D = {k+'s':np.nan*np.ones((inds,len(eps),D0[k].size)) for k in keys}
 for id in range(inds):
     for ne, epochs in enumerate(eps):
         try:
-            D = np.load('YL2_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L)+'.npz')
+            D = np.load('YL4_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L)+'.npz')
             for k in keys:
                 big_D[k+'s'][id,ne,:] = D[k]
         except Exception as e:
