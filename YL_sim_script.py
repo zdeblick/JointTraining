@@ -14,13 +14,13 @@ id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
 L = 1
-Prange = [35,50]
+Prange = [80,80]#[35,50]
 Srange = [10,41]
 Nrange = [14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
-epochs = 10
+epochs = 100
 
 
 torch.manual_seed(id)
@@ -35,10 +35,12 @@ if True:
     Ns = [np.random.randint(Nrange[0],Nrange[1]+1) for i in range(L)]
     M = np.random.randint(Mrange[0],Mrange[1]+1)
     Q = np.random.randint(Qrange[0],Qrange[1]+1)
-    if np.min(Ns)<=np.min([P,S,M+Q]):
+    if np.min(Ns)<np.min([P,S,M+Q]):
         trues+=1
     else:
         falses+=1
+    if id<10:
+        print(Ns)
 print(trues,falses)
 #stop
 sx = 1
@@ -80,10 +82,6 @@ class Net(nn.Module):
         z = self.B(x)
         return z, y
 
-## val loss of simple linear regression (no z)
-# hAxy = Y@np.linalg.pinv(X)
-# Cval_ind = np.sum(np.square(Yv-hAxy @ Xv))
-
 
 Cval_JT = np.inf
 lossfns = (F.mse_loss,F.mse_loss)
@@ -91,7 +89,7 @@ lossfns = (F.mse_loss,F.mse_loss)
 for beta in betas:
     model = Net(S,Ns,M,Q)
     model = model.float()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
 
     alpha = beta/(1+beta)
     for epoch in range(epochs):
@@ -111,7 +109,7 @@ for beta in betas:
         
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL1_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
+np.savez('YL2_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
 
 
 
