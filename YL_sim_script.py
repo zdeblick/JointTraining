@@ -13,14 +13,14 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 2
+L = 1
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
-epochs = 1000
+epochs = 10
 
 
 torch.manual_seed(id)
@@ -91,7 +91,7 @@ lossfns = (F.mse_loss,F.mse_loss)
 for beta in betas:
     model = Net(S,Ns,M,Q)
     model = model.float()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-1)
 
     alpha = beta/(1+beta)
     for epoch in range(epochs):
@@ -111,7 +111,7 @@ for beta in betas:
         
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
+np.savez('YL1_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
 
 
 

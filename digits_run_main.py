@@ -6,14 +6,15 @@ from digits_sim_script import *
 array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 #array_id_str = 'PBS_ARRAYID' #pbs
 
-pen='cross_rc'
-#pen=None
+#pen='cross_rc'
+pen='l1'
 l1s = np.array([0]) if pen is None else np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
 subsamples = [1]
 
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
-(trial,a_i,l_i,s_i,true_task_i,hypo_task_i) = np.unravel_index(id,(200,18,l1s.size,len(subsamples),4,1))
+(trial,a_i,l_i,s_i,true_task_i,hypo_task_i) = np.unravel_index(id,(200,18,l1s.size,len(subsamples),1,1))
+true_task_i,hypo_task_i = (3,3)
 sub = subsamples[s_i]
 L2_matched = hypo_task_i==0
 if L2_matched:
