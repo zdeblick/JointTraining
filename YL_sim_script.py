@@ -20,7 +20,7 @@ Nrange = [14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
-epochs = 100
+epochs = 10000
 
 
 torch.manual_seed(id)
@@ -89,7 +89,7 @@ lossfns = (F.mse_loss,F.mse_loss)
 for beta in betas:
     model = Net(S,Ns,M,Q)
     model = model.float()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     alpha = beta/(1+beta)
     for epoch in range(epochs):
@@ -109,7 +109,7 @@ for beta in betas:
         
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL2_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
+np.savez('YL4_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
 
 
 
