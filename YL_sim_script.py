@@ -89,7 +89,7 @@ lossfns = (F.mse_loss,F.mse_loss)
 for beta in betas:
     model = Net(S,Ns,M,Q)
     model = model.float()
-    lr = 1e-1
+    lr = 1e-3
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     alpha = beta/(1+beta)
@@ -103,8 +103,9 @@ for beta in betas:
         loss.backward()
         optimizer.step()
         if epoch%(epochs//10)==(epochs//10)-1:
-            lr*=0.5
+            #lr*=0.5
             optimizer.param_groups[0]['lr'] = lr
+            print(loss.item())
     loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
     if loss_val<Cval_JT:
         Cval_JT = loss_val
@@ -113,7 +114,7 @@ for beta in betas:
         
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YLdec_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
+np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
 
 
 
