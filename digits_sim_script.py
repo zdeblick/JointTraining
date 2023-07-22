@@ -498,7 +498,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,n
     #Perform joint-training
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        if t < epochs/2 or pen is None:
+        if t < epochs/2 or pen!='cross_rc':
             # for the first 150 epochs, apply C_map regularization, no thresholding, keep learning rates for theta_y and theta_z fixed
             _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha, l1=l1, pen=pen, L2_matched=L2_matched)
             loss+=30 #prevents scheduler from being tripped at epoch 150
@@ -515,7 +515,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,n
     W = np.zeros((N,N))
     W[fake_neurons_measured,:] = W_part
     algn = alignment(np.abs(W)>0,shapes) if pen is not None else None
-    lcm = layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]) if pen is not None else layer_cm(np.abs(W),[np.prod(s) for s in shapes])
+    lcm = layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]) if pen=='cross_rc' else layer_cm(np.abs(W),[np.prod(s) for s in shapes])
     np.savez(fname,train_loss=loss,test_losses=losses,task_alignments=task_alignments,
         sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=algn,layer_cm=lcm)
 
