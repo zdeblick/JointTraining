@@ -79,7 +79,7 @@ class Net(nn.Module):
 Cval_JT = np.inf
 lossfns = (F.mse_loss,F.mse_loss)
 for beta in betas:
-    model = Net(S,N,M,Q)
+    model = Net(S,[N],M,Q)
     model = model.float()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     alpha = beta/(1+beta)
@@ -93,9 +93,6 @@ for beta in betas:
         loss.backward()
         optimizer.step()
     loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
-    hW = model.W[0].weight.detach().numpy()
-    hA = model.A.weight.detach().numpy()
-    print(loss_val,np.sum(np.square(Yv-hA @ hW @ Xv)))
     if loss_val<Cval_JT:
         Cval_JT = loss_val
     if beta==0:
