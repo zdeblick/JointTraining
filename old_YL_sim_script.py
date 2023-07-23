@@ -94,4 +94,4 @@ for beta in betas:
         
 print(P,S,N,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id)+'_neps='+str(epochs),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=N,M=M,Q=Q)
+np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L=1',Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=N,M=M,Q=Q)
