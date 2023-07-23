@@ -8,4 +8,4 @@
 #SBATCH --array 0-974
 #SBATCH --chdir=/allen/programs/braintv/workgroups/cortexmodels/daniel.zdeblick/JointTraining
 
-/home/daniel.zdeblick/anaconda3/bin/python3 YL_sim_script.py #digits_run_main.py
+/home/daniel.zdeblick/anaconda3/bin/python3 old_YL_sim_script.py #digits_run_main.py
