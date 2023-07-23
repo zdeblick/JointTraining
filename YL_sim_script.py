@@ -16,7 +16,7 @@ id = 0 if id is None else int(id)
 L = 1
 Prange = [35,50]
 Srange = [10,41]
-Nrange = [14,35]
+Nrange = [10,32]#[14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
@@ -102,10 +102,10 @@ for beta in betas:
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        if epoch%(epochs//10)==(epochs//10)-1:
+#        if epoch%(epochs//10)==(epochs//10)-1:
             #lr*=0.5
-            optimizer.param_groups[0]['lr'] = lr
-            print(loss.item())
+#            optimizer.param_groups[0]['lr'] = lr
+#            print(loss.item())
     loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
     if loss_val<Cval_JT:
         Cval_JT = loss_val
