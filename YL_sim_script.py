@@ -13,7 +13,7 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 4
+L = 1
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
@@ -108,7 +108,7 @@ for bi,beta in enumerate(betas):
             #lr*=0.5
 #            optimizer.param_groups[0]['lr'] = lr
 #            print(loss.item())
-        if epochs%100==99:
+        if epoch%100==99:
             loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
             Cvals[bi,epoch//100] = loss_val
 
