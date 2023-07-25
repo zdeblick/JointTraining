@@ -13,14 +13,14 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 4
+L = 1
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
-epochs = 10000
+epochs = 5000
 
 
 torch.manual_seed(id)
