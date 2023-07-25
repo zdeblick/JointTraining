@@ -4,10 +4,10 @@ import os
 os.chdir('YL_results')
 savepath = '../YL_summaries/'
 
-L=2
+L=4
 inds = 324
 eps = [1000,5000,10000]
-D0 = np.load('YL_id=0_neps='+str(eps[0])+'_L='+str(L)+'.npz')
+D0 = np.load('YL_id=0_neps='+str(eps[-1])+'_L='+str(L)+'.npz')
 keys = D0.keys()
 big_D = {k+'s':np.nan*np.ones((inds,len(eps),D0[k].size)) for k in keys}
 for id in range(inds):

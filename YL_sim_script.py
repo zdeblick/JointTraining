@@ -13,7 +13,7 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 2
+L = 4
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
