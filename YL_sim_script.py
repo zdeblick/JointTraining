@@ -13,7 +13,7 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 1
+L = 4
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
@@ -84,10 +84,10 @@ class Net(nn.Module):
         return z, y
 
 
-Cval_JT = np.inf
 lossfns = (F.mse_loss,F.mse_loss)
+Cvals = np.zeros((betas.size,epochs//100))
 
-for beta in betas:
+for bi,beta in enumerate(betas):
     model = Net(S,Ns,M,Q)
     model = model.float()
     lr = 1e-3
@@ -103,15 +103,17 @@ for beta in betas:
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
 #        if epoch%(epochs//10)==(epochs//10)-1:
             #lr*=0.5
 #            optimizer.param_groups[0]['lr'] = lr
 #            print(loss.item())
-    loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
-    if loss_val<Cval_JT:
-        Cval_JT = loss_val
-    if beta==0:
-        Cval_ind = loss_val
+        if epochs%100==99:
+            loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
+            Cvals[bi,epoch//100] = loss_val
+
+Cval_JT = np.min(Cvals,axis=0)
+Cval_ind = Cvals[0,:]
         
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
