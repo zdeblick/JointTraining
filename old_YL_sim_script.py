@@ -53,6 +53,7 @@ Yv = Axy @ Xv + sy*np.random.normal(size=[M,Pval])
 # val loss of Joint Training
 betas = np.hstack((0,np.logspace(-5,2,15)))
 
+#if False:
 class Net(nn.Module):
     '''fits Y-shaped network model to data via joint-training'''
 
@@ -73,14 +74,32 @@ class Net(nn.Module):
         z = self.B(x)
         return z, y
 
+if False:
+#class Net(nn.Module):
+    '''fits Y-shaped network model to data via joint-training'''
+    
+    def __init__(self,S,N,M,Q):
+        super(Net, self).__init__()
+        self.W = nn.Linear(S, N, bias=False)
+        self.A = nn.Linear(N, M, bias=False)
+        self.B = nn.Linear(N, Q, bias=False)
+    def forward(self, x):
+        x = self.W(x)
+        y = self.A(x)
+        z = self.B(x)
+        return z, y
+
+
 ## val loss of simple linear regression (no z)
 # hAxy = Y@np.linalg.pinv(X)
 # Cval_ind = np.sum(np.square(Yv-hAxy @ Xv))
 Cval_JT = np.inf
 lossfns = (F.mse_loss,F.mse_loss)
 for beta in betas:
-    model = Net(S,[N],M,Q)
+    model = Net(S,N,M,Q)
     model = model.float()
+    print([p for p in model.parameters()])
+    stop
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     alpha = beta/(1+beta)
     for epoch in range(epochs):
@@ -93,6 +112,7 @@ for beta in betas:
         loss.backward()
         optimizer.step()
     loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
+    print(loss_val)
     if loss_val<Cval_JT:
         Cval_JT = loss_val
     if beta==0:

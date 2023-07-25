@@ -13,7 +13,7 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 1
+L = 2
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
@@ -69,15 +69,16 @@ class Net(nn.Module):
         if type(Ns) is int:
             Ns = [int(Ns)]
         super(Net, self).__init__()
-        self.W = [nn.Linear(S, Ns[0], bias=False)]
+        self.W0 = nn.Linear(S, Ns[0], bias=False)
         for i in range(len(Ns)-1):
-            self.W.append(nn.Linear(Ns[i], Ns[i+1], bias=False))
+            setattr(self,'W'+str(i+1),nn.Linear(Ns[i], Ns[i+1], bias=False) )
         self.A = nn.Linear(Ns[-1], M, bias=False)
         self.B = nn.Linear(Ns[-1], Q, bias=False)
+        self.L = len(Ns)
 
     def forward(self, x):
-        for Wi in self.W:
-            x = Wi(x)
+        for i in range(self.L):
+            x = getattr(self,'W'+str(i))(x)
         y = self.A(x)
         z = self.B(x)
         return z, y
