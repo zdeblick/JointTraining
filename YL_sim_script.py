@@ -20,7 +20,7 @@ Nrange = [10,32]#[14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
-epochs = 5000
+epochs = 50000
 
 
 torch.manual_seed(id)
