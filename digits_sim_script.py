@@ -509,14 +509,15 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,n
             # for the last 150 epochs, no C_map regularization, instead threshholding
             _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha,freeze_small=True,L2_matched=L2_matched)
             scheduler.step(loss)
-        _, losses = test_joint(test_dataloader2, model2, lossfns, L2_matched)
+        _, test_losses = test_joint(test_dataloader2, model2, lossfns, L2_matched)
+        _, train_losses = test_joint(train_dataloader2, model2, lossfns, L2_matched)
     # add back in rows that were not ''recorded'' for consistency
     W_part = model2.fc_act.weight.detach().numpy()
     W = np.zeros((N,N))
     W[fake_neurons_measured,:] = W_part
     algn = alignment(np.abs(W)>0,shapes) if pen is not None else None
     lcm = layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]) if pen=='cross_rc' else layer_cm(np.abs(W),[np.prod(s) for s in shapes])
-    np.savez(fname,train_loss=loss,test_losses=losses,task_alignments=task_alignments,
+    np.savez(fname,train_losses=train_losses,test_losses=test_losses,task_alignments=task_alignments,
         sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=algn,layer_cm=lcm)
 
     print('Done',fname)

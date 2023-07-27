@@ -8,9 +8,9 @@ savepath = '../digits_summaries/'
 in_shape = np.array([8,6],dtype='int')
 d = [16,32,128,10]
 size='med'
-pen = 'l1'
+#pen = 'l1'
 #pen = 'cross_rc'
-
+pen = None
 
 #size='small'
 #d = [8,16,128,10]
@@ -43,7 +43,7 @@ for true_task_i,hypo_task_i in ((3,3),): #itertools.product(range(4),range(4)):
                 try:
                     fname = 'digits_headlr_'+size+'netmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)
                     D = np.load(fname+'.npz',allow_pickle=True)
-                    train_losses[trial,a_i,l_i] = D['train_loss']
+                    train_losses[trial,a_i,l_i] = D['train_losses'][1]
                     test_losses[trial,a_i,l_i,:] = D['test_losses']
                     sparsities[trial,a_i,l_i] = D['cpfn']
                     if D['alignment']!=None:
