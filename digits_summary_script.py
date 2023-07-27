@@ -9,8 +9,8 @@ in_shape = np.array([8,6],dtype='int')
 d = [16,32,128,10]
 size='med'
 #pen = 'l1'
-#pen = 'cross_rc'
-pen = None
+pen = 'cross_rc'
+#pen = None
 
 #size='small'
 #d = [8,16,128,10]
