@@ -6,9 +6,10 @@ from digits_sim_script import *
 array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 #array_id_str = 'PBS_ARRAYID' #pbs
 
-pen = None
-#pen='cross_rc'
+#pen = None
+pen='cross_rc'
 #pen='l1'
+thresh = False
 l1s = np.array([0]) if pen is None else np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
 subsamples = [1]
 
@@ -26,5 +27,5 @@ alpha = alphas[a_i]
 l1 = l1s[l_i]
 trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
 matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
-fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)
-run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial)
+fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_thresh=hard'*thresh+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)
+run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,thresh=thresh)
