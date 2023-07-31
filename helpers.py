@@ -18,3 +18,12 @@ def joint_loss(pred,y,lossfns,alpha=1.0):
     '''
     return alpha*lossfns[0](pred[0],y[0])+(1-alpha)*lossfns[1](pred[1],y[1])
 
+
+
+def dim(x):
+    if type(x)==torch.Tensor:
+        x = x.detach().numpy()
+    x = x-np.mean(x,axis=0)
+    C = x.T@x
+    eigs,_ = np.linalg.eig(C)
+    return np.square(np.sum(eigs))/np.sum(np.square(eigs))

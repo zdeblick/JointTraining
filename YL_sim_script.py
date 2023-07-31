@@ -13,14 +13,14 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 4
+L = 1
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
 Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
-epochs = 50000
+epochs = 20000
 
 
 torch.manual_seed(id)
@@ -46,7 +46,6 @@ print(trues,falses)
 sx = 1
 sy = 1
 sz = 1
-
 
 # True parameters of simulation
 Axy = np.random.normal(size=[M,S])
@@ -83,9 +82,23 @@ class Net(nn.Module):
         z = self.B(x)
         return z, y
 
+    def dims(self, x):
+        with torch.no_grad():
+            dims = [dim(x)]
+            for i in range(self.L):
+                x = getattr(self,'W'+str(i))(x)
+                dims.append(dim(x))
+            y = self.A(x)
+            dims.append(dim(y))
+            z = self.B(x)
+            dims.append(dim(z))
+        return dims
+
 
 lossfns = (F.mse_loss,F.mse_loss)
 Cvals = np.zeros((betas.size,epochs//100))
+dims = np.zeros((betas.size,L+3,epochs//100))
+
 
 for bi,beta in enumerate(betas):
     model = Net(S,Ns,M,Q)
@@ -111,13 +124,15 @@ for bi,beta in enumerate(betas):
         if epoch%100==99:
             loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
             Cvals[bi,epoch//100] = loss_val
+            dims[bi,:,epoch//100] = model.dims(torch.Tensor(X.T))
 
 Cval_JT = np.min(Cvals,axis=0)
 Cval_ind = Cvals[0,:]
-        
+dims = dims[np.argmin(Cvals,axis=0),:,np.arange(dims.shape[-1])]        
+
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q)
+np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q,dims=dims)
 
 
 
