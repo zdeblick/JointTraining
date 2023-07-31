@@ -4,7 +4,7 @@ import os
 os.chdir('YL_results')
 savepath = '../YL_summaries/'
 
-L=1
+L=4
 inds = 325
 epochs = 20000
 D0 = np.load('YL_id=0_neps='+str(epochs)+'_L='+str(L)+'.npz')

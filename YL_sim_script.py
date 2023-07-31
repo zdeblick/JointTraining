@@ -13,7 +13,7 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 1
+L = 4
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
@@ -129,10 +129,15 @@ for bi,beta in enumerate(betas):
 Cval_JT = np.min(Cvals,axis=0)
 Cval_ind = Cvals[0,:]
 dims = dims[np.argmin(Cvals,axis=0),:,np.arange(dims.shape[-1])]        
+out_dims = [dim(Y.T), dim(Z.T)]
 
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q,dims=dims)
+np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q,dims=dims,out_dims=out_dims)
+
+#D = dict(np.load('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L)+'.npz'))
+#D['out_dims'] = out_dims
+#np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),**D)
 
 
 
