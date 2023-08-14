@@ -13,7 +13,7 @@ os.chdir('YL_results')
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 
-L = 4
+Ls = [1,2,4]
 Prange = [35,50]
 Srange = [10,41]
 Nrange = [10,32]#[14,35]
@@ -21,14 +21,16 @@ Mrange = [5,20]
 Qrange = [5,20]
 Pval = 2000
 epochs = 20000
+trials = 325
 
-
-torch.manual_seed(id)
+Li,seed = np.unravel_index(id,(len(Ls),trials))
+L = Ls[Li]
+torch.manual_seed(seed)
 trues=0
 falses=0
-#for id in range(20000):
+#for seed in range(20000):
 if True:
-    np.random.seed(id)
+    np.random.seed(seed)
     # hyperparameters of simulation
     P = np.random.randint(Prange[0],Prange[1]+1)
     S = np.random.randint(Srange[0],Srange[1]+1)
@@ -60,6 +62,7 @@ Yv = Axy @ Xv + sy*np.random.normal(size=[M,Pval])
 
 # val loss of Joint Training
 betas = np.hstack((0,np.logspace(-5,2,15)))
+bi_chosen = 7 #1e-2
 
 class Net(nn.Module):
     '''fits Y-shaped network model to data via joint-training'''
@@ -94,11 +97,17 @@ class Net(nn.Module):
             dims.append(dim(z))
         return dims
 
+    def m_dim(self):
+        with torch.no_grad():
+            M = self.W0.weight.data
+            for i in range(1,self.L):
+                M = getattr(self,'W'+str(i)).weight.data @ M
+        return erank(M)
 
 lossfns = (F.mse_loss,F.mse_loss)
 Cvals = np.zeros((betas.size,epochs//100))
 dims = np.zeros((betas.size,L+3,epochs//100))
-
+eranks = np.zeros((betas.size,epochs//100))
 
 for bi,beta in enumerate(betas):
     model = Net(S,Ns,M,Q)
@@ -125,16 +134,20 @@ for bi,beta in enumerate(betas):
             loss_val = F.mse_loss(model(torch.Tensor(Xv.T))[1],torch.Tensor(Yv.T)).detach().numpy()
             Cvals[bi,epoch//100] = loss_val
             dims[bi,:,epoch//100] = model.dims(torch.Tensor(X.T))
+            eranks[bi,epoch//100] = model.m_dim()
 
 Cval_JT = np.min(Cvals,axis=0)
 Cval_ind = Cvals[0,:]
 bstari = np.argmin(Cvals,axis=0)
+dims_1b = dims[bi_chosen,:,:]
 dims = dims[bstari,:,np.arange(dims.shape[-1])]        
+eranks_1b = eranks[bi_chosen,:,:]
+eranks = eranks[bstari,:,np.arange(dims.shape[-1])]
 out_dims = [dim(Y.T), dim(Z.T)]
 
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q,dims=dims,out_dims=out_dims,bstari=bstari)
+np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q,dims=dims,out_dims=out_dims,bstari=bstari,dims_1b=dims_1b,eranks_1b=eranks_1b,b=betas[bi_chosen],betas=betas)
 
 #D = dict(np.load('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L)+'.npz'))
 #D['out_dims'] = out_dims

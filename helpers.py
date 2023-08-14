@@ -3,6 +3,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
+from scipy.stats import entropy
+
+def erank(x):
+    print(type(x))
+    if type(x)==torch.Tensor:
+        x = x.detach().numpy()
+    s = np.linalg.svd(x,compute_uv=False,full_matrices=False)
+    s/=np.sum(s)
+    return np.exp(entropy(s))
 
 
 def joint_loss(pred,y,lossfns,alpha=1.0):
