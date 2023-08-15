@@ -34,7 +34,8 @@ if True:
     # hyperparameters of simulation
     P = np.random.randint(Prange[0],Prange[1]+1)
     S = np.random.randint(Srange[0],Srange[1]+1)
-    Ns = [np.random.randint(Nrange[0],Nrange[1]+1) for i in range(L)]
+#    Ns = [np.random.randint(Nrange[0],Nrange[1]+1) for i in range(L)]
+    Ns = [np.random.randint(Nrange[0],Nrange[1]+1)]*L
     M = np.random.randint(Mrange[0],Mrange[1]+1)
     Q = np.random.randint(Qrange[0],Qrange[1]+1)
     if np.min(Ns)<np.min([P,S,M+Q]):
