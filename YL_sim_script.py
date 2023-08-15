@@ -140,18 +140,14 @@ Cval_JT = np.min(Cvals,axis=0)
 Cval_ind = Cvals[0,:]
 bstari = np.argmin(Cvals,axis=0)
 dims_1b = dims[bi_chosen,:,:]
-dims = dims[bstari,:,np.arange(dims.shape[-1])]        
-eranks_1b = eranks[bi_chosen,:,:]
-eranks = eranks[bstari,:,np.arange(dims.shape[-1])]
+dims = dims[bstari,:,np.arange(epochs//100)]        
+eranks_1b = eranks[bi_chosen,:]
+eranks = eranks[bstari,np.arange(epochs//100)]
 out_dims = [dim(Y.T), dim(Z.T)]
 
 print(P,S,Ns,M,Q)
 print(Cval_ind,Cval_JT)
-np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q,dims=dims,out_dims=out_dims,bstari=bstari,dims_1b=dims_1b,eranks_1b=eranks_1b,b=betas[bi_chosen],betas=betas)
-
-#D = dict(np.load('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L)+'.npz'))
-#D['out_dims'] = out_dims
-#np.savez('YL_id='+str(id)+'_neps='+str(epochs)+'_L='+str(L),**D)
+np.savez('YL_id='+str(seed)+'_neps='+str(epochs)+'_L='+str(L),Cval_ind=Cval_ind,Cval_JT=Cval_JT,P=P,S=S,N=Ns,M=M,Q=Q,dims=dims,out_dims=out_dims,bstari=bstari,dims_1b=dims_1b,eranks_1b=eranks_1b,eranks=eranks,b=betas[bi_chosen],betas=betas)
 
 
 

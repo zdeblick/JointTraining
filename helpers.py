@@ -6,7 +6,6 @@ import numpy as np
 from scipy.stats import entropy
 
 def erank(x):
-    print(type(x))
     if type(x)==torch.Tensor:
         x = x.detach().numpy()
     s = np.linalg.svd(x,compute_uv=False,full_matrices=False)
