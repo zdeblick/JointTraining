@@ -6,11 +6,12 @@ from digits_sim_script import *
 array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 #array_id_str = 'PBS_ARRAYID' #pbs
 
-l1s = np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
-pen='cross_rc'
-subsamples = [1]
-epochs = [150, 450, 750]
+pen=None
+penstr = ('' if pen is  None else '_pen='+pen)
+subsamples = [0.05]
+epochs = [150,300,450,600,900,1200,1500,1800,2100,2400]
 nonlinear = False
+l1s = np.logspace(-6,-2,9) if pen is not None else np.array([0]) #lambda hyperparameter controlling C_map regularization
 
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
@@ -28,5 +29,5 @@ alpha = alphas[a_i]
 l1 = l1s[l_i]
 trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
 matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
-fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+'_pen='+pen+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)+('_nepochs='+str(n_eps))*(n_eps!=300)+'_linear'*(not nonlinear)
+fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+penstr+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)+('_nepochs='+str(n_eps))*(n_eps!=300)+'_linear'*(not nonlinear)
 run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=n_eps,nonlinear=nonlinear)
