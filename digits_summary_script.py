@@ -8,10 +8,11 @@ savepath = '../digits_summaries/'
 in_shape = np.array([8,6],dtype='int')
 d = [16,32,128,10]
 size='med'
-#pen = 'l1'
+pen = 'l1'
 #pen = 'cross_rc'
-pen = None
-thresh = True
+#pen = None
+thresh = 'soft'
+threshstr = '' if thresh is None else '_thresh='+thresh
 
 #size='small'
 #d = [8,16,128,10]
@@ -42,7 +43,7 @@ for true_task_i,hypo_task_i in ((3,3),): #itertools.product(range(4),range(4)):
         for a_i, alpha in enumerate(alphas):
             for l_i, l1 in enumerate(l1s):
                 try:
-                    fname = 'digits_headlr_'+size+'netmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_thresh=hard'*thresh+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)
+                    fname = 'digits_headlr_'+size+'netmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+threshstr+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)
                     D = np.load(fname+'.npz',allow_pickle=True)
                     train_losses[trial,a_i,l_i] = D['train_losses'][1]
                     test_losses[trial,a_i,l_i,:] = D['test_losses']
@@ -53,7 +54,7 @@ for true_task_i,hypo_task_i in ((3,3),): #itertools.product(range(4),range(4)):
                     task_alignments[trial,a_i,l_i,:,:,:] = D['task_alignments']
                 except Exception as e:
                     print(e,trial,a_i,l_i)
-    fname = savepath+'results_headlr_'+size+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_thresh_hard'*thresh
+    fname = savepath+'results_headlr_'+size+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+threshstr
     if not os.path.isfile(fname+'.npz') or True:
         np.savez(fname,train_losses=train_losses,test_losses=test_losses,task_alignments=task_alignments,
                  sparsities=sparsities,alphas=alphas,l1s=l1s,alignments=alignments,d=d,cms=cms)

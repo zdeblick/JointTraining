@@ -228,7 +228,7 @@ def make_sparse_hard(model2):
 def make_sparse(model2):
     '''an alternative threshholding scheme not used in the paper'''
     W = model2.fc_act.weight.data
-    thresh=1e-2
+    thresh=1e-6
     model2.fc_act.weight.data = torch.where(W>thresh,W,torch.zeros((1,)))
     model2.fc_act.weight.grad[W<thresh] = 0
 
@@ -279,9 +279,10 @@ def train_joint(dataloader, model, lossfns, optimizer, alpha=1.0, l1=0.0, freeze
         # Backpropagation
         optimizer.zero_grad()
         loss.backward()
-        if freeze_small:
-            #make_sparse(model)
+        if freeze_small =='hard':
             make_sparse_hard(model)
+        if freeze_small =='soft':        
+            make_sparse(model)
         optimizer.step()
         
         #nonegativity constraint
@@ -396,7 +397,7 @@ def alignment(W,shapes):
 
 
 
-def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,nonlinear=True,thresh=True):
+def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,nonlinear=True,thresh=None):
     os.chdir('digits_results')
 
     #Load the digits dataset
@@ -497,7 +498,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,n
     #Perform joint-training
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        if t < epochs/2 or not thresh:
+        if t < epochs/2 or thresh is None:
             # for the first 150 epochs, apply C_map regularization, no thresholding, keep learning rates for theta_y and theta_z fixed
             _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha, l1=l1, pen=pen, L2_matched=L2_matched)
             loss+=30 #prevents scheduler from being tripped at epoch 150
@@ -506,7 +507,7 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,n
             optimizer2.param_groups[2]['lr'] = init_lr/(1-alpha)
         else:
             # for the last 150 epochs, no C_map regularization, instead threshholding
-            _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha,freeze_small=True,L2_matched=L2_matched)
+            _, loss = train_joint(train_dataloader2, model2, lossfns, optimizer2, alpha=alpha,freeze_small=thresh,L2_matched=L2_matched)
             scheduler.step(loss)
         _, test_losses = test_joint(test_dataloader2, model2, lossfns, L2_matched)
         _, train_losses = test_joint(train_dataloader2, model2, lossfns, L2_matched)
@@ -514,8 +515,8 @@ def run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,epochs=300,n
     W_part = model2.fc_act.weight.detach().numpy()
     W = np.zeros((N,N))
     W[fake_neurons_measured,:] = W_part
-    algn = alignment(np.abs(W)>0,shapes) if thresh else None
-    lcm = layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]) if thresh else layer_cm(np.abs(W),[np.prod(s) for s in shapes])
+    algn = alignment(np.abs(W)>0,shapes) if thresh is not None else None
+    lcm = layer_cm(np.abs(W)>0,[np.prod(s) for s in shapes]) if thresh is not None else layer_cm(np.abs(W),[np.prod(s) for s in shapes])
     np.savez(fname,train_losses=train_losses,test_losses=test_losses,task_alignments=task_alignments,
         sparsity=-12,cpfn=np.sum(np.ravel(W)>0)/train_acts.shape[1],alignment=algn,layer_cm=lcm)
 

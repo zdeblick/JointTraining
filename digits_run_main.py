@@ -6,17 +6,18 @@ from digits_sim_script import *
 array_id_str = 'SLURM_ARRAY_TASK_ID' #slurm
 #array_id_str = 'PBS_ARRAYID' #pbs
 
-pen = None
+#pen = None
 #pen='cross_rc'
-#pen='l1'
-thresh = True
+pen='l1'
+thresh = 'soft' #'hard' #None
+threshstr = '' if thresh is None else '_thresh='+thresh
 l1s = np.array([0]) if pen is None else np.logspace(-6,-2,9) #lambda hyperparameter controlling C_map regularization
 subsamples = [1]
 
 id = os.getenv(array_id_str)
 id = 0 if id is None else int(id)
 (trial,a_i,l_i,s_i,true_task_i,hypo_task_i) = np.unravel_index(id,(200,18,l1s.size,len(subsamples),1,1))
-true_task_i,hypo_task_i = (3,3)
+true_task_i,hypo_task_i = (3,2)
 sub = subsamples[s_i]
 L2_matched = hypo_task_i==0
 if L2_matched:
@@ -27,5 +28,5 @@ alpha = alphas[a_i]
 l1 = l1s[l_i]
 trained_str = ['_untrained', '_eotrained', '_looptrained', ''][true_task_i]
 matched_str = ['_L2matched', '_eomatched', '_loopmatched', ''][hypo_task_i]
-fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+'_thresh=hard'*thresh+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)
+fname = 'digits_headlr_mednetmatch'+trained_str+matched_str+('' if pen is  None else '_pen='+pen)+threshstr+'_trial'+str(trial)+'_ai='+str(a_i)+'_li='+str(l_i)+('_1000sub='+str(int(1000*sub)))*(sub<1)
 run_digits(fname,true_task_i,hypo_task_i,alpha,l1,sub,pen,trial,thresh=thresh)
